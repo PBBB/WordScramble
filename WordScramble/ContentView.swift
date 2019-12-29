@@ -27,14 +27,23 @@ struct ContentView: View {
                     .autocapitalization(.none)
                     .padding()
                 
-                List(usedWords, id: \.self) { word in
-                    HStack {
-                        Image(systemName: "\(word.count).circle")
-                        Text(word)
+                GeometryReader { largeGeo in
+                    List(self.usedWords, id: \.self) { word in
+                        GeometryReader { geo in
+                            HStack {
+                                Image(systemName: "\(word.count).circle")
+                                    .foregroundColor(self.calculateColor(listGeo: largeGeo, itemGeo: geo))
+                                Text(word)
+                                Spacer()
+                            }
+                            .offset(x: geo.frame(in: .global).minY < 600 ? 0 : (geo.frame(in: .global).minY - 600) * 3, y: 0.0)
+                            .accessibilityElement(children: .ignore)
+                            .accessibility(label: Text("\(word), \(word.count) letters"))
+                            .animation(.default)
+                        }
                     }
-                    .accessibilityElement(children: .ignore)
-                    .accessibility(label: Text("\(word), \(word.count) letters"))
                 }
+                
                 
                 Text("Score for root word \"\(rootWord)\": \(score)")
             }
@@ -45,6 +54,18 @@ struct ContentView: View {
                 Alert(title: Text(errorTitle), message: Text(errorMessage), dismissButton: .default(Text("OK")))
             }
         }
+    }
+    
+    func calculateColor(listGeo: GeometryProxy, itemGeo: GeometryProxy) -> Color {
+        let startPosition = listGeo.frame(in: .global).minY
+        let endPosition = listGeo.frame(in: .global).maxY
+        let itemPosition = itemGeo.frame(in: .global).minY
+        
+        let hue = (itemPosition - startPosition) / (endPosition - startPosition)
+        
+        let color = Color(hue: Double(hue), saturation: 0.7, brightness: 0.8)
+        
+        return color
     }
     
     func startGame() {
